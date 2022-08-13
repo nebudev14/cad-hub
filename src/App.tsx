@@ -1,10 +1,9 @@
 import React from "react";
 import logo from "./logo.svg";
-import "./App.css";
 import { invoke } from "@tauri-apps/api";
 
 function App() {
-  invoke("greet", {});
+  invoke("vars", {});
 
   return (
     <div className="App">

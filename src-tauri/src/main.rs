@@ -3,11 +3,34 @@
   windows_subsystem = "windows"
 )]
 
+extern crate crypto;
+
 use tokio::io::{AsyncWriteExt, Result};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use futures_util::{StreamExt, SinkExt};
 
+use crypto::{ symmetriccipher, buffer, aes, aes_gcm, blockmodes };
+use crypto::buffer::{ ReadBuffer, WriteBuffer, BufferResult };
 
+use std::env;
+use dotenv;
+
+
+
+// #[tauri::command]
+// fn bundle(data: &[u8], size: u32) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
+//   dotenv::dotenv.ok();
+
+
+//   let mut cipher = aes_gcm::AesGcm::new();
+// }
+
+#[tauri::command]
+async fn vars() {
+  dotenv::dotenv().ok();
+  let value = dotenv::var("AES_KEY").unwrap();
+
+}
 
 #[tauri::command]
 async fn greet() {
@@ -44,7 +67,7 @@ async fn greet() {
 #[tokio::main]
 pub async fn main() {
   tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![greet])
+    .invoke_handler(tauri::generate_handler![greet, vars])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
