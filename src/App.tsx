@@ -4,7 +4,7 @@ import "./App.css";
 import { invoke } from "@tauri-apps/api";
 
 function App() {
-  invoke("greet", { name: "World" }).then((response) => console.log(response));
+  invoke("greet", {});
 
   return (
     <div className="App">
