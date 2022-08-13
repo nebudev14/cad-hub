@@ -18,7 +18,7 @@ use std::env;
 use std::iter::repeat;
 
 #[tauri::command]
-fn bundle(data: &[u8], size: u32) {
+fn bundle(data: &[u8]) -> (Vec<u8>, Vec<u8>) {
     dotenv::dotenv().ok();
     let aes_key = dotenv::var("AES_KEY").unwrap();
     let iv = dotenv::var("iv").unwrap();
@@ -34,6 +34,9 @@ fn bundle(data: &[u8], size: u32) {
     let mut tag: Vec<u8> = repeat(0).take(16).collect();
 
     cipher.encrypt(data, &mut output[..], &mut tag[..]);
+
+    return (output, tag);
+
 }
 
 #[tauri::command]
