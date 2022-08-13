@@ -1,70 +1,79 @@
 #![cfg_attr(
-  all(not(debug_assertions), target_os = "windows"),
-  windows_subsystem = "windows"
+    all(not(debug_assertions), target_os = "windows"),
+    windows_subsystem = "windows"
 )]
 
 extern crate crypto;
 
+use crypto::aead::AeadEncryptor;
+use futures_util::{SinkExt, StreamExt};
 use tokio::io::{AsyncWriteExt, Result};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
-use futures_util::{StreamExt, SinkExt};
 
-use crypto::{ symmetriccipher, buffer, aes, aes_gcm, blockmodes };
-use crypto::buffer::{ ReadBuffer, WriteBuffer, BufferResult };
-
-use std::env;
+use crypto::buffer::{BufferResult, ReadBuffer, WriteBuffer};
+use crypto::{aes, aes_gcm, blockmodes, buffer, symmetriccipher};
 
 use dotenv;
+use std::env;
+use std::iter::repeat;
 
 #[tauri::command]
-fn bundle(data: &[u8], size: u32) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
-  dotenv::dotenv().ok();
-  let aes_key = dotenv::var("AES_KEY").unwrap();
-  let iv = dotenv::var("iv").unwrap();
-  let aad = dotenv::var("aad").unwrap();
+fn bundle(data: &[u8], size: u32) {
+    dotenv::dotenv().ok();
+    let aes_key = dotenv::var("AES_KEY").unwrap();
+    let iv = dotenv::var("iv").unwrap();
+    let aad = dotenv::var("aad").unwrap();
 
+    let mut cipher = aes_gcm::AesGcm::new(
+        aes::KeySize::KeySize128,
+        &aes_key[..].as_bytes(),
+        &iv[..].as_bytes(),
+        &aad[..].as_bytes(),
+    );
+    let mut output: Vec<u8> = repeat(0).take(data.len()).collect();
+    let mut tag: Vec<u8> = repeat(0).take(16).collect();
 
-  let mut cipher = aes_gcm::AesGcm::new();
+    cipher.encrypt(data, &mut output[..], &mut tag[..]);
 }
-
-
 
 #[tauri::command]
 async fn greet() {
-  println!("Hello, tokio-tungstenite!");
+    println!("Hello, tokio-tungstenite!");
 
-  let url = url::Url::parse("ws://127.0.0.1:8080/updates").unwrap();
+    let url = url::Url::parse("ws://127.0.0.1:8080/updates").unwrap();
 
-  let (ws_stream, _response) = connect_async(url).await.expect("Failed to connect");
-  println!("WebSocket handshake has been successfully completed");
+    let (ws_stream, _response) = connect_async(url).await.expect("Failed to connect");
+    println!("WebSocket handshake has been successfully completed");
 
-  let (mut write, read) = ws_stream.split();
+    let (mut write, read) = ws_stream.split();
 
-  println!("sending");
+    println!("sending");
 
-  write.send(Message::Text(r#"hello"#.to_string())).await.unwrap();
+    write
+        .send(Message::Text(r#"hello"#.to_string()))
+        .await
+        .unwrap();
 
-  println!("sent");
+    println!("sent");
 
-  let read_future = read.for_each(|message| async {
-      println!("receiving...");
-       let data = message.unwrap().into_data();
-       tokio::io::stdout().write(&data).await.unwrap();
-       println!("received...");
-       let s = String::from_utf8(data);
-       if s.unwrap() == "Whats up" {
-        println!("\nequal!");
-       }
-  });
+    let read_future = read.for_each(|message| async {
+        println!("receiving...");
+        let data = message.unwrap().into_data();
+        tokio::io::stdout().write(&data).await.unwrap();
+        println!("received...");
+        let s = String::from_utf8(data);
+        if s.unwrap() == "Whats up" {
+            println!("\nequal!");
+        }
+    });
 
-  read_future.await;
-
+    read_future.await;
 }
 
 #[tokio::main]
 pub async fn main() {
-  tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![greet])
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![greet])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
