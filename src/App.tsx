@@ -1,26 +1,32 @@
 import React from "react";
-import logo from "./logo.svg";
 import { invoke } from "@tauri-apps/api";
+import { Nav } from "./components/nav";
+import { open } from "@tauri-apps/api/dialog";
+import { appDir } from "@tauri-apps/api/path";
 
 function App() {
   invoke("vars", {});
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <Nav />
+      <div className="flex items-center justify-center h-screen px-4 py-6 bg-gray-800">
+        <button className="px-2 py-3 text-3xl text-white rounded-lg bg-cyan-500" onClick={async () => {
+          const selected = await open({
+            directory: true,
+            multiple: false,
+            defaultPath: await appDir(),
+          });
+
+          if (Array.isArray(selected) || selected == null) console.log("you can't do that, L");
+          else {
+            console.log("selected dir: " + selected);
+          }
+
+        }}>
+          Create a directory
+        </button>
+      </div>
     </div>
   );
 }

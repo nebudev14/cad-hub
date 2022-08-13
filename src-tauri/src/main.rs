@@ -17,7 +17,6 @@ use dotenv;
 use std::env;
 use std::iter::repeat;
 
-#[tauri::command]
 fn bundle(data: &[u8]) -> (Vec<u8>, Vec<u8>) {
     dotenv::dotenv().ok();
     let aes_key = dotenv::var("AES_KEY").unwrap();
