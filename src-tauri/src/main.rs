@@ -13,24 +13,21 @@ use crypto::{ symmetriccipher, buffer, aes, aes_gcm, blockmodes };
 use crypto::buffer::{ ReadBuffer, WriteBuffer, BufferResult };
 
 use std::env;
+
 use dotenv;
 
-
-
-// #[tauri::command]
-// fn bundle(data: &[u8], size: u32) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
-//   dotenv::dotenv.ok();
-
-
-//   let mut cipher = aes_gcm::AesGcm::new();
-// }
-
 #[tauri::command]
-async fn vars() {
+fn bundle(data: &[u8], size: u32) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
   dotenv::dotenv().ok();
-  let value = dotenv::var("AES_KEY").unwrap();
+  let aes_key = dotenv::var("AES_KEY").unwrap();
+  let iv = dotenv::var("iv").unwrap();
+  let aad = dotenv::var("aad").unwrap();
 
+
+  let mut cipher = aes_gcm::AesGcm::new();
 }
+
+
 
 #[tauri::command]
 async fn greet() {
@@ -67,7 +64,7 @@ async fn greet() {
 #[tokio::main]
 pub async fn main() {
   tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![greet, vars])
+    .invoke_handler(tauri::generate_handler![greet])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
