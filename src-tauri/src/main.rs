@@ -6,7 +6,7 @@
 use tokio::io::{AsyncWriteExt, Result};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use futures_util::{StreamExt, SinkExt};
-use tauri::async_runtime;
+
 
 
 #[tauri::command]
@@ -38,8 +38,6 @@ async fn greet() {
   });
 
   read_future.await;
-
-  // Ok(())
 
 }
 
