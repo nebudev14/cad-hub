@@ -59,7 +59,15 @@ async fn send_file(file_path: &str) -> Result<(), ()> {
 
     let (mut write, read) = ws_stream.split();
 
-    println!("sending");
+    println!("sending size");
+    println!("{}", output.len());
+
+    write
+    .send(Message::Text(output.len().to_string()))
+    .await
+    .unwrap();
+
+    println!("sending data");
 
     for x in (0..output.len()).step_by(10) {
       write
@@ -67,7 +75,6 @@ async fn send_file(file_path: &str) -> Result<(), ()> {
       .send(Message::Binary(output[x..x+10].iter().cloned().collect()))
       .await
       .unwrap();
-
     }
  
     let read_future = read.for_each(|message| async {
