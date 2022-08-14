@@ -67,9 +67,17 @@ async fn send_file(file_path: &str) -> Result<(), ()> {
     .await
     .unwrap();
 
+  println!("sending auth tag");
+  println!("{:?}", &tag);
+
+  write
+    .send(Message::Binary(tag))
+    .await
+    .unwrap();
+
   println!("sending data");
 
-  let counter: usize = 0;
+  let mut counter: usize = 0;
   while counter < output.len() {
     if output.len() - counter < 16 {
       let left_over = output.len() - counter;
@@ -78,7 +86,7 @@ async fn send_file(file_path: &str) -> Result<(), ()> {
           output[counter..counter + left_over]
             .iter()
             .cloned()
-            .collect(),
+            .collect()
         ))
         .await
         .unwrap();
@@ -93,20 +101,11 @@ async fn send_file(file_path: &str) -> Result<(), ()> {
         .await
         .unwrap();
     }
+
+    counter += 16
   }
 
-  let read_future = read.for_each(|message| async {
-    println!("receiving...");
-    let data = message.unwrap().into_data();
-    tokio::io::stdout().write(&data).await.unwrap();
-    println!("received...");
-    let s = String::from_utf8(data);
-    if s.unwrap() == "Whats up" {
-      println!("\nequal!");
-    }
-  });
-
-  read_future.await;
+  println!("Finished");
 
   Ok(())
 }
