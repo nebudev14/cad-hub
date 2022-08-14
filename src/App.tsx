@@ -30,7 +30,7 @@ function App() {
             //   console.log("selected dir: " + selected);
             // }
 
-            invoke("test_bundle", { filePath: "/Users/nebudev14/Desktop/savonius.SLDPRT" })
+            invoke("send_file", { filePath: "/Users/nebudev14/Desktop/savonius.SLDPRT" })
             // const contents = await readBinaryFile("savonius.SLDPRT", {
             //   dir: BaseDirectory.Desktop,
             // }).then((data) => {

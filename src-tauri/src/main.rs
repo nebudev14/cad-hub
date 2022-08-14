@@ -7,7 +7,7 @@ extern crate crypto;
 
 use crypto::aead::AeadEncryptor;
 use futures_util::{SinkExt, StreamExt};
-use tokio::io::{AsyncWriteExt, Result};
+use tokio::io::{AsyncWriteExt};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
 use crypto::buffer::{BufferResult, ReadBuffer, WriteBuffer};
@@ -17,6 +17,7 @@ use dotenv;
 use std::env;
 use std::iter::repeat;
 use std::fs;
+use std::iter::Iterator;
 
 fn bundle(data: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     dotenv::dotenv().ok();
@@ -42,12 +43,14 @@ fn bundle(data: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
 fn test_bundle(file_path: &str) {
   let data = fs::read(file_path);
   let (output, tag) = bundle(data.unwrap());
-  println!("{}", std::str::from_utf8(&output).unwrap());
+  println!("{:?}", tag);
 }
 
 #[tauri::command]
-async fn greet() {
-    println!("Hello, tokio-tungstenite!");
+async fn send_file(file_path: &str) -> Result<(), ()> {
+    println!("Encrypting data...");
+    let data = fs::read(file_path);
+    let (output, tag) = bundle(data.unwrap());
 
     let url = url::Url::parse("ws://127.0.0.1:8080/updates").unwrap();
 
@@ -58,13 +61,15 @@ async fn greet() {
 
     println!("sending");
 
-    write
-        .send(Message::Text(r#"hello"#.to_string()))
-        .await
-        .unwrap();
+    for x in (0..output.len()).step_by(10) {
+      write
+      // .send(Message::Text("hello".to_owned()))
+      .send(Message::Binary(output[x..x+10].iter().cloned().collect()))
+      .await
+      .unwrap();
 
-    println!("sent");
-
+    }
+ 
     let read_future = read.for_each(|message| async {
         println!("receiving...");
         let data = message.unwrap().into_data();
@@ -77,12 +82,14 @@ async fn greet() {
     });
 
     read_future.await;
+  
+    Ok(())
 }
 
 #[tokio::main]
 pub async fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet, test_bundle])
+        .invoke_handler(tauri::generate_handler![send_file, test_bundle])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
