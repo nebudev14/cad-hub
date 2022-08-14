@@ -16,12 +16,13 @@ use crypto::{aes, aes_gcm, blockmodes, buffer, symmetriccipher};
 use dotenv;
 use std::env;
 use std::iter::repeat;
+use std::fs;
 
-fn bundle(data: &[u8]) -> (Vec<u8>, Vec<u8>) {
+fn bundle(data: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     dotenv::dotenv().ok();
     let aes_key = dotenv::var("AES_KEY").unwrap();
-    let iv = dotenv::var("iv").unwrap();
-    let aad = dotenv::var("aad").unwrap();
+    let iv = dotenv::var("IV").unwrap();
+    let aad = dotenv::var("AAD").unwrap();
 
     let mut cipher = aes_gcm::AesGcm::new(
         aes::KeySize::KeySize128,
@@ -32,10 +33,16 @@ fn bundle(data: &[u8]) -> (Vec<u8>, Vec<u8>) {
     let mut output: Vec<u8> = repeat(0).take(data.len()).collect();
     let mut tag: Vec<u8> = repeat(0).take(16).collect();
 
-    cipher.encrypt(data, &mut output[..], &mut tag[..]);
+    cipher.encrypt(&data as &[u8], &mut output[..], &mut tag[..]);
 
     return (output, tag);
+}
 
+#[tauri::command]
+fn test_bundle(file_path: &str) {
+  let data = fs::read(file_path);
+  let (output, tag) = bundle(data.unwrap());
+  println!("{}", std::str::from_utf8(&output).unwrap());
 }
 
 #[tauri::command]
@@ -75,7 +82,7 @@ async fn greet() {
 #[tokio::main]
 pub async fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, test_bundle])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
