@@ -30,7 +30,7 @@ function App() {
             //   console.log("selected dir: " + selected);
             // }
 
-            invoke("send_file", { filePath: "/Users/nebudev14/Applications/savonius.SLDPRT" })
+            invoke("send_file", { filePath: "C:\\Users\\warren\\Documents\\GrabCAD\\Rapid React - Sciborgs 2022\\Electronics\\Parts\\Battery.SLDPRT" })
             // const contents = await readBinaryFile("savonius.SLDPRT", {
             //   dir: BaseDirectory.Desktop,
             // }).then((data) => {
