@@ -39,7 +39,7 @@ function App() {
             // });
           }}
         >
-          Create a directory
+          Create a project
         </button>
       </div>
     </div>
